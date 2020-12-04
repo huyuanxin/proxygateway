@@ -44,6 +44,7 @@ function select_server(api_info)
     return servers[request_index % server_count + 1]; --Lua 的 table 索引默认从 1 开始
 end
 
+
 function _M.dispatch()
     local config_str = domain_cache:get(ngx.var.host);
     if config_str == nil then
@@ -76,12 +77,14 @@ function _M.dispatch()
     if api_info == nil then
         ngx.exit(404)
     end
-
-    -- TODO：IP黑名单...
-    -- 限流
     local al = require "access_limit"
+    --黑名单
+    al.checkIp()
+    --限流
     al.checkAccessLimit(api_info["request_uri"], api_info["uri_limit_seconds"], api_info["uri_limit_times"], api_info["ip_uri_limit_seconds"], api_info["ip_uri_limit_times"])
 
+
+    
     -- 负载均衡，选择服务器开始
     local server = select_server(api_info);
     if server == nil then
